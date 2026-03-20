@@ -59,11 +59,11 @@ function checkGitStatus(doCommit = false) {
 
     const status = execSync("git status --porcelain").toString();
 
-    if (doCommit) {
-      console.log("📌 Realizando commit de los cambios actuales...");
-      runCommand("git add .");
-      runCommand('git commit -m "chore: commit previo a migración"');
-    } else {
+	if (status.trim() && doCommit) {
+		console.log("📌 Realizando commit de los cambios actuales...");
+      	runCommand("git add .");
+      	runCommand('git commit -m "chore: commit previo a migración"');
+	} else {
       if (status.trim()) {
         console.log("❌ Hay cambios sin commit en el repositorio:\n");
         console.log(status);
