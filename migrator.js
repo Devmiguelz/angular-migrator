@@ -1,7 +1,25 @@
+const path = require("path");
 const fs = require("fs");
 const { execSync } = require("child_process");
 
-const CONFIG = JSON.parse(fs.readFileSync("./migrator.config.json", "utf-8"));
+// 📂 Ruta donde está el script
+const scriptDir = __dirname;
+
+// 📂 Ruta del proyecto (argumento o actual)
+const projectPath = process.argv[2]
+  ? path.resolve(process.argv[2])
+  : process.cwd();
+
+console.log(`📂 Proyecto: ${projectPath}`);
+console.log(`🧠 Script: ${scriptDir}`);
+
+// Leer config desde el script (NO del proyecto)
+const CONFIG = JSON.parse(
+  fs.readFileSync(path.join(scriptDir, "migrator.config.json"), "utf-8")
+);
+
+// Cambiar ejecución al proyecto
+process.chdir(projectPath);
 
 function log(message) {
     console.log(message);
