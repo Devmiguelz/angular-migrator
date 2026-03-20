@@ -80,10 +80,26 @@ function checkGitStatus() {
   }
 }
 
+function ensureDependencies() {
+  const nodeModulesPath = path.join(projectPath, "node_modules");
+
+  if (!fs.existsSync(nodeModulesPath)) {
+    log("📦 node_modules no encontrado. Instalando dependencias...");
+
+    runCommand(CONFIG.npmInstallCommand || "npm install --legacy-peer-deps");
+
+    log("✅ Dependencias instaladas correctamente\n");
+  } else {
+    log("✅ node_modules ya existe, se omite instalación\n");
+  }
+}
+
 function main() {
     ensureLogFolder();
 
     checkGitStatus();
+
+    ensureDependencies();
 
     log("🚀 Iniciando migración Angular...\n");
 
