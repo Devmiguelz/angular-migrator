@@ -1,0 +1,109 @@
+const fs = require("fs");
+const { execSync } = require("child_process");
+
+const CONFIG = JSON.parse(fs.readFileSync("./migrator.config.json", "utf-8"));
+
+function log(message) {
+    console.log(message);
+    fs.appendFileSync(CONFIG.logFile, message + "\n");
+}
+
+function runCommand(command) {
+    try {
+        log(`\n▶ Ejecutando: ${command}`);
+        execSync(command, { stdio: "inherit" });
+    } catch (error) {
+        log(`❌ Error ejecutando: ${command}`);
+        process.exit(1);
+    }
+}
+
+function getAngularVersion() {
+    const pkg = JSON.parse(fs.readFileSync("./package.json", "utf-8"));
+    const version =
+        pkg.dependencies["@angular/core"] ||
+        pkg.devDependencies["@angular/core"];
+
+    return parseInt(version.match(/\d+/)[0]);
+}
+
+function gitCommit(version) {
+    if (!CONFIG.commitPerStep) return;
+
+    runCommand("git add .");
+    runCommand(`git commit -m "chore: upgrade to Angular ${version}"`);
+}
+
+function ensureLogFolder() {
+    const dir = CONFIG.logFile.split("/")[0];
+    if (!fs.existsSync(dir)) {
+        fs.mkdirSync(dir);
+    }
+}
+
+function checkGitStatus() {
+  try {
+    console.log("🔍 Verificando estado de Git...");
+
+    const status = execSync("git status --porcelain").toString();
+
+    if (status.trim()) {
+      console.log("❌ Hay cambios sin commit en el repositorio:\n");
+      console.log(status);
+
+      console.log("\n🛑 Por favor haz commit o stash antes de continuar.");
+      process.exit(1);
+    }
+
+    console.log("✅ Repositorio limpio, continuando...\n");
+  } catch (error) {
+    console.log("⚠️ No se pudo verificar el estado de Git.");
+    process.exit(1);
+  }
+}
+
+function main() {
+    ensureLogFolder();
+
+    checkGitStatus();
+
+    log("🚀 Iniciando migración Angular...\n");
+
+    let currentVersion = getAngularVersion();
+    const targetVersion = CONFIG.targetVersion;
+
+    log(`📌 Versión actual detectada: Angular ${currentVersion}`);
+    log(`🎯 Versión objetivo: Angular ${targetVersion}\n`);
+
+    while (currentVersion < targetVersion) {
+        const nextVersion = currentVersion + 1;
+
+        log(`\n⬆️ Migrando a Angular ${nextVersion}...`);
+
+        const forceFlag = CONFIG.useForce ? "--force" : "";
+
+        runCommand(
+            `ng update @angular/core@${nextVersion} @angular/cli@${nextVersion} ${forceFlag}`
+        );
+
+        if (CONFIG.runNpmInstall) {
+            runCommand(CONFIG.npmInstallCommand);
+        }
+
+        // Validación básica
+        try {
+            runCommand("npm run build");
+        } catch {
+            log("❌ Falló el build. Abortando migración.");
+            process.exit(1);
+        }
+
+        gitCommit(nextVersion);
+
+        currentVersion = nextVersion;
+    }
+
+    log("\n✅ Migración completada con éxito 🚀");
+}
+
+main();

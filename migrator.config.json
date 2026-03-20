@@ -1,0 +1,8 @@
+{
+  "targetVersion": 20,
+  "runNpmInstall": true,
+  "npmInstallCommand": "npm install --legacy-peer-deps",
+  "commitPerStep": true,
+  "useForce": true,
+  "logFile": "logs/migration.log"
+}
