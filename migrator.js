@@ -23,7 +23,7 @@ process.chdir(projectPath);
 
 function log(message) {
     console.log(message);
-    fs.appendFileSync(CONFIG.logFile, message + "\n");
+    fs.appendFileSync(path.join(scriptDir, CONFIG.logFile), message + "\n");
 }
 
 function runCommand(command) {
