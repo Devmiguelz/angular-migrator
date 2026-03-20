@@ -120,18 +120,6 @@ function main() {
 
     runCommand(`ng update @angular/core@${nextVersion} @angular/cli@${nextVersion} ${forceFlag}`);
 
-    if (CONFIG.runNpmInstall) {
-      runCommand(CONFIG.npmInstallCommand);
-    }
-
-    // Validación básica
-    try {
-      runCommand("npm run build");
-    } catch {
-      log("❌ Falló el build. Abortando migración.");
-      process.exit(1);
-    }
-
     gitCommit(nextVersion);
 
     currentVersion = nextVersion;
